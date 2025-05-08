@@ -28,14 +28,12 @@ CREATE TABLE checkin.nominal(
 
 CREATE TABLE checkin.configs(
     id int AUTO_INCREMENT,
-    nome varchar(255) UNIQUE NOT NULL,
+    id_usuario int NOT NULL,
+    nome varchar(255) NOT NULL,
     valor varchar(255) NOT NULL,
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    FOREIGN KEY (id_usuario) REFERENCES checkin.users(id)
 );
-//-- Configurações iniciais
-INSERT INTO checkin.configs (nome, valor) VALUES
-('toleranciaPonto', '5'),
-('toleranciaGeral', '10');
 
 CREATE TABLE checkin.registros(
     id int AUTO_INCREMENT,
@@ -52,27 +50,3 @@ CREATE TABLE checkin.registros(
     PRIMARY KEY (id),
     FOREIGN KEY (id_usuario) REFERENCES checkin.users(id)
 );
-
-
-
-
-select * from checkin.users;
-
-select * from checkin.registros;
-
-select * from checkin.configs;
-
-
-drop table checkin.registros;
-drop table checkin.users;
-
-
-
-INSERT INTO checkin.nominal (id_usuario, dia_semana, hora1, hora2, hora3, hora4, hora5, hora6) VALUES
-(1, 'Domingo',  NULL,       NULL,       NULL,       NULL,      NULL, NULL),
-(1, 'Segunda', '08:00:00', '11:00:00', '13:00:00', '18:00:00', null, null),
-(1, 'Terça',   '08:00:00', '11:00:00', '13:00:00', '18:00:00', null, null),
-(1, 'Quarta',  '08:00:00', '11:00:00', '13:00:00', '18:00:00', null, null),
-(1, 'Quinta',  '08:00:00', '11:00:00', '13:00:00', '18:00:00', null, null),
-(1, 'Sexta',   '08:00:00', '11:00:00', '13:00:00', '18:00:00', null, null),
-(1, 'Sábado',  '08:00:00', '12:00:00', null,        null,      null, null);

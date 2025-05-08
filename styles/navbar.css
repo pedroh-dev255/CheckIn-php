@@ -34,3 +34,13 @@
 .btn-logout:hover {
     background-color: #ff1a1a; /* Cor de fundo vermelha mais escura ao passar o mouse */
 }
+
+
+.mode-select{
+    width: 100px; /* Largura do select */
+    padding: 10px; /* Espaçamento interno */
+    margin: 5px 0; /* Margem ao redor do select */
+    border: 1px solid #ccc; /* Borda cinza clara */
+    border-radius: 5px; /* Bordas arredondadas */
+    background-color: #f9f9f9; /* Cor de fundo cinza claro */
+}

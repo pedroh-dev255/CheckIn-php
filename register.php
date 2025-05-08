@@ -17,8 +17,32 @@
         $stmt->bind_param("sss", $name, $email, $password);
 
         if ($stmt->execute()) {
-            echo "<script>alert('Registro realizado com sucesso!');</script>";
-            echo "<script>window.location.href = './login.php';</script>";
+            $stmt = $conn->prepare("select id from users where email = ?");
+            $stmt->bind_param("s",$email);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $user = $result->fetch_assoc();
+
+            $stmt = $conn->prepare("INSERT INTO checkin.configs (id_usuario, nome, valor) VALUES
+            (?,'toleranciaPonto', '5'),
+            (?,'toleranciaGeral', '10'),
+            (?,'maximo50', '180'),
+            (?, 'fechamento', '25');");
+            $stmt->bind_param("iiii", $user['id'], $user['id'], $user['id'], $user['id']);
+            $stmt->execute();
+
+            $stmt = $conn->prepare("INSERT INTO checkin.nominal (id_usuario, dia_semana, hora1, hora2, hora3, hora4, hora5, hora6) VALUES
+            (?,'Domingo', '8:00', '12:00', '14:00', '18:00', NULL, NULL),
+            (?,'Segunda', '8:00', '12:00', '14:00', '18:00', NULL, NULL),
+            (?,'Terça', '8:00', '12:00', '14:00', '18:00', NULL, NULL),
+            (?,'Quarta', '8:00', '12:00', '14:00', '18:00', NULL, NULL),
+            (?,'Quinta', '8:00', '12:00', '14:00', '18:00', NULL, NULL),
+            (?,'Sexta', '8:00', '12:00', '14:00', '18:00', NULL, NULL),
+            (?,'Sábado','8:00','12:00',null,null,NULL,NULL);");
+            $stmt->bind_param("iiiiiii", $user['id'], $user['id'], $user['id'], $user['id'], $user['id'], $user['id'], $user['id']);
+            $stmt->execute();
+
+            header("Location: ./login.php");
             exit();
         } else {
             echo "<script>alert('Erro ao registrar!');</script>";

@@ -29,6 +29,23 @@ body {
 .btn-filter:hover {
     background-color: #45a049; /* Cor de fundo verde mais escura ao passar o mouse */
 }
+
+.btn-submit {
+    background-color: #008CBA; /* Cor de fundo azul */
+    color: white; /* Cor do texto branca */
+    border: none; /* Sem borda */
+    padding: 10px 20px; /* Espaçamento interno */
+    text-align: center; /* Centraliza o texto */
+    text-decoration: none; /* Remove o sublinhado */
+    display: inline-block; /* Exibe como bloco em linha */
+    font-size: 16px; /* Tamanho da fonte */
+    margin: 4px 2px; /* Margem ao redor do botão */
+    cursor: pointer; /* Cursor de ponteiro ao passar o mouse */
+    border-radius: 5px; /* Bordas arredondadas */
+}
+.btn-submit:hover {
+    background-color: #007B9E; /* Cor de fundo azul mais escura ao passar o mouse */
+}
 .select {
     width: 200px; /* Largura do select */
     padding: 10px; /* Espaçamento interno */
@@ -37,6 +54,49 @@ body {
     border-radius: 5px; /* Bordas arredondadas */
     background-color: #f9f9f9; /* Cor de fundo cinza claro */
 }
+
+.mode-select{
+    width: 100px; /* Largura do select */
+    padding: 10px; /* Espaçamento interno */
+    margin: 5px 0; /* Margem ao redor do select */
+    border: 1px solid #ccc; /* Borda cinza clara */
+    border-radius: 5px; /* Bordas arredondadas */
+    background-color: #f9f9f9; /* Cor de fundo cinza claro */
+}
+
 .select:hover {
     border-color: #4CAF50; /* Cor da borda verde ao passar o mouse */
 }
+
+input {
+    width: 200px; /* Largura do input */
+    padding: 10px; /* Espaçamento interno */
+    margin: 5px 0; /* Margem ao redor do input */
+    border: 1px solid #ccc; /* Borda cinza clara */
+    border-radius: 5px; /* Bordas arredondadas */
+    background-color: #f9f9f9; /* Cor de fundo cinza claro */
+}
+
+input:hover {
+    border-color: #4CAF50; /* Cor da borda verde ao passar o mouse */
+}
+
+label {
+    font-size: 16px; /* Tamanho da fonte */
+    margin-bottom: 5px; /* Margem inferior */
+    display: block; /* Exibe como bloco */
+    color: #333; /* Cor do texto cinza escuro */
+}
+
+#horarios {
+    width: 100px; /* Largura do input */
+    padding: 10px; /* Espaçamento interno */
+    margin: 5px 0; /* Margem ao redor do input */
+    border: 1px solid #ccc; /* Borda cinza clara */
+    border-radius: 5px; /* Bordas arredondadas */
+    background-color: #f9f9f9; /* Cor de fundo cinza claro */
+}
+#horarios:hover {
+    border-color: #4CAF50; /* Cor da borda verde ao passar o mouse */
+}
+
