@@ -120,6 +120,7 @@ $hoje = date('Y-m-d');
             border-radius: 5px; /* Bordas arredondadas */
             background-color: #f9f9f9; /* Cor de fundo cinza claro */
         }
+        .footer { text-align:center; padding:20px; background:#f2f2f2; }
     </style>
 </head>
 <body>
@@ -197,8 +198,11 @@ $hoje = date('Y-m-d');
                 <tbody>
                 <?php
                 $period = new DatePeriod($dataInicio, new DateInterval('P1D'), $dataFim->modify('+1 day'));
-                $saldo = 0;
+                $saldo = timeToMinutes("03:31");
                 $saldoAnt=0;
+                $saldofal = 0;
+                $saldo50 = 0;
+                $saldo100 = 0;
                 foreach ($period as $d) {
                     $dt = $d->format('Y-m-d');
                     $row = $registrosPorData[$dt] ?? [];
@@ -263,40 +267,43 @@ $hoje = date('Y-m-d');
                     $toleranciaPonto = isset($data['toleranciaPonto']) ? $data['toleranciaPonto'] / 60 : 0;
                     $toleranciaGeral = isset($data['toleranciaGeral']) ? $data['toleranciaGeral'] / 60 : 0;
 
-                    $maximo50 = isset($data['maximo50']) ? $data['maximo50'] / 60 : 0;
+                    $maximo50 = isset($data['maximo50']) ? $data['maximo50'] : 0;
                     $diaSemana = transleteDia($d->format('l'));
-
 
                     $difference = 0;
 
+                    $difference= timeToMinutes($totalWorked) - timeToMinutes($meta);
+
                     // Determinar faltantes/extras
                     if ($difference < 0) {
-                        $faltantes = max(abs($difference), 0);
+                        $faltantes =  $difference;
                     } else {
-                        if ($diaSemana == 'Domingo' || $mode == 'Feriado') {
+                        if ($diaSemana == 'Domingo' || $diaSemana == "Sábado" || $mode == 'Feriado') {
                             $extra100 = $difference;
                         } else {
-                            $extra50 = min($difference, $maximo50);
-                            $extra100 = max($difference - $maximo50, 0);
+                            if ($difference <= $maximo50) {
+                                $extra50 = $difference;
+                            } else {
+                                $extra50 = $maximo50;
+                                $difference -= $maximo50;
+                                $extra100 = $difference;
+                            }
                         }
                     }
-
-
-
-
-
-
 
                     echo "<td>".$totalWorked."</td>";
 
                     $cor = "style='color: rgba(255, 255, 255, 0)'";
                     echo "<td>". $meta ."</td>";
-                    echo "<td ".($faltantes != 0.00 ? '' : $cor).">". str_replace('.', ':', number_format($faltantes, 2))."</td>";
-                    echo "<td ".($extra50 != 0.00 ? '' : $cor).">".str_replace('.', ':', number_format($extra50, 2))."</td>";
-                    echo "<td ".($extra100 != 0.00 ? '' : $cor).">".str_replace('.', ':', number_format($extra100, 2))."</td>";
-                    $saldo += ($extra50 + $extra100) - $faltantes;
+                    echo "<td ".($faltantes != 0.00 ? '' : $cor).">".'-' . MinutsTohour(($faltantes*-1))."</td>";
+                    echo "<td ".($extra50 != 0.00 ? '' : $cor).">".MinutsTohour($extra50)."</td>";
+                    echo "<td ".($extra100 != 0.00 ? '' : $cor).">".MinutsTohour($extra100)."</td>";
+                    $saldo += ($extra50 + $extra100) + $faltantes;
+                    $saldofal += $faltantes*-1;
+                    $saldo50 += $extra50;
+                    $saldo100 += $extra100;
                     
-                    echo "<td ".($saldo == $saldoAnt ? $cor : '').">" . str_replace('.', ':', number_format($saldo, 2)). "</td>";
+                    echo "<td ".($saldo == $saldoAnt ? $cor : '').">" . MinutsTohour($saldo). "</td>";
                     echo "<td>
                         <input type='text' class='obs-input' data-data=". $r['data'] ." value=". htmlspecialchars($r['obs'] ?? '') .">
                     </td>";
@@ -312,7 +319,18 @@ $hoje = date('Y-m-d');
                     echo "</tr>";
                     $saldoAnt = $saldo;
                 }
+                
                 ?>
+                <tr>
+                    <td colspan="7" style="text-align: center; font-weight: bold;">Total:</td>
+                    <td><?= MinutsTohour($saldo) ?></td>
+                    <td></td>
+                    <td>-<?= MinutsTohour($saldofal) ?></td>
+                    <td><?= MinutsTohour($saldo50) ?></td>
+                    <td><?= MinutsTohour($saldo100) ?></td>
+                    <td><?= MinutsTohour($saldo) ?></td>
+                    <td colspan="2" style="text-align: center; font-weight: bold;">---</td>
+                </tr>
                     <script>
                         document.querySelectorAll('.obs-input').forEach(input => {
                             input.addEventListener('change', () => {
@@ -341,6 +359,11 @@ $hoje = date('Y-m-d');
 
                 </tbody>
             </table>
+        </div>
+        <br><br><br><br>
+        <div class="footer">
+            <p>&copy; <?php echo date('Y')?> ClockIn. Todos os direitos reservados.</p>
+            <p><a href="https://portifolio.phsolucoes.space">Pedro Henrique</a></p>
         </div>
     </div>
 

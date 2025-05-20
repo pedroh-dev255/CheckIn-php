@@ -9,9 +9,9 @@
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         include_once './config/db.php';
 
-        echo $name = $_POST['name'];
-        echo $email = $_POST['email'];
-        echo $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
+        $name = $_POST['name'];
+        $email = $_POST['email'];
+        $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
 
         $stmt = $conn->prepare("INSERT INTO users (nome, email, senha) VALUES (?, ?, ?)");
         $stmt->bind_param("sss", $name, $email, $password);
