@@ -37,7 +37,11 @@ $data_h = [];
 foreach ($nominais as $row) {
     $ds = $row['dia_semana'];
     for ($i = 1; $i <= 6; $i++) {
-        $data_h[$ds]['h'.$i] = $row['hora'.$i];
+        if(isset($row['hora'.$i]) && $row['hora'.$i] != null || $row['hora'.$i] != '') {
+            $data_h[$ds]['h'.$i] = $row['hora'.$i];
+        } else {
+            $data_h[$ds]['h'.$i] = "00:00";
+        }
     }
 }
 
@@ -67,24 +71,20 @@ foreach ($regs as $r) {
     $registrosPorData[$r['data']] = $r;
 }
 
-function calcularMetaDiaria($diaSemanaIngles, $data_h) {
-    $map = [
-        'Sunday'=>'Domingo','Monday'=>'Segunda','Tuesday'=>'Terça',
-        'Wednesday'=>'Quarta','Thursday'=>'Quinta','Friday'=>'Sexta','Saturday'=>'Sábado'
-    ];
-    $dia = $map[$diaSemanaIngles] ?? null;
-    if (!$dia) return 0;
-
-    $meta = 0;
-    for ($i = 1; $i <= 5; $i += 2) {
-        $in = $data_h[$dia]['h'.$i] ?? null;
-        $out = $data_h[$dia]['h'.($i+1)] ?? null;
-        if ($in && $out) {
-            $meta += (strtotime($out) - strtotime($in)) / 3600;
-        }
-    }
-    return $meta;
+function timeToMinutes($time) {
+    if (!$time || $time == '00:00') return 0;
+    list($h, $m) = explode(':', $time);
+    return ($h * 60) + $m; // ignora os segundos
 }
+
+
+function MinutsTohour($time) {
+    if (!$time || $time == '00:00:00') return '00:00';
+    $hours = floor($time / 60);
+    $minutes = $time % 60;
+    return sprintf('%02d:%02d', $hours, $minutes);
+}
+
 
 function transleteDia($diaSemanaIngles){
     $map = [
@@ -175,6 +175,8 @@ $hoje = date('Y-m-d');
                 total de horas extras 50%: <span class="total-extras">00:00</span>
                 total de horas extras 100%: <span class="total-extras-50">00:00</span>
             </div>
+
+            <button onclick="executarBackground()">Recalcular as horas extras em Background</button>
             
             <div class="periodo-info">
                 Período: <?php echo $dataInicio->format('d/m/Y').' a '.$dataFim->format('d/m/Y'); ?>
@@ -201,9 +203,48 @@ $hoje = date('Y-m-d');
                     $dt = $d->format('Y-m-d');
                     $row = $registrosPorData[$dt] ?? [];
                     $dia = $d->format('l');
+                    $diaSemHoje = transleteDia($dia);
+                    $totalWorked = MinutsTohour(0);
+                    $meta = MinutsTohour(0);
+
+                    // Verifica por ponto se o ponto esta dentro da tolerancia por ponto
+                    $horario1 = (isset($row['registo1']) ? ((abs(timeToMinutes($row['registo1']) - timeToMinutes($data_h[$diaSemHoje]['h1'])) > (isset($data['toleranciaPonto']) ? $data['toleranciaPonto'] : 0)) ? $row['registo1'] : $data_h[$diaSemHoje]['h1'] ) : null);
+                    $horario2 = (isset($row['registo2']) ? ((abs(timeToMinutes($row['registo2']) - timeToMinutes($data_h[$diaSemHoje]['h2'])) > (isset($data['toleranciaPonto']) ? $data['toleranciaPonto'] : 0)) ? $row['registo2'] : $data_h[$diaSemHoje]['h2'] ) : null);
+                    $horario3 = (isset($row['registo3']) ? ((abs(timeToMinutes($row['registo3']) - timeToMinutes($data_h[$diaSemHoje]['h3'])) > (isset($data['toleranciaPonto']) ? $data['toleranciaPonto'] : 0)) ? $row['registo3'] : $data_h[$diaSemHoje]['h3'] ) : null);
+                    $horario4 = (isset($row['registo4']) ? ((abs(timeToMinutes($row['registo4']) - timeToMinutes($data_h[$diaSemHoje]['h4'])) > (isset($data['toleranciaPonto']) ? $data['toleranciaPonto'] : 0)) ? $row['registo4'] : $data_h[$diaSemHoje]['h4'] ) : null);
+                    $horario5 = (isset($row['registo5']) ? ((abs(timeToMinutes($row['registo5']) - timeToMinutes($data_h[$diaSemHoje]['h5'])) > (isset($data['toleranciaPonto']) ? $data['toleranciaPonto'] : 0)) ? $row['registo5'] : $data_h[$diaSemHoje]['h5'] ) : null);
+                    $horario6 = (isset($row['registo6']) ? ((abs(timeToMinutes($row['registo6']) - timeToMinutes($data_h[$diaSemHoje]['h6'])) > (isset($data['toleranciaPonto']) ? $data['toleranciaPonto'] : 0)) ? $row['registo6'] : $data_h[$diaSemHoje]['h6'] ) : null);
+                    
+                    //echo $row['registo1'] . " " . $row['registo2'] . " " . $row['registo3'] . " " . $row['registo4'] . " " . $row['registo5'] . " " . $row['registo6'] . "<br>";
+                    //echo $horario1 . " " . $horario2 . " " . $horario3 . " " . $horario4 . " " . $horario5 . " " . $horario6 . "<br>";
+                    //echo MinutsTohour((timeToMinutes($horario2) - timeToMinutes($horario1)) + (timeToMinutes($horario4) - timeToMinutes($horario3)) + (timeToMinutes($horario6) - timeToMinutes($horario5))) . " - " . MinutsTohour(timeToMinutes($horario2) - timeToMinutes($horario1)) . " " . MinutsTohour(timeToMinutes($horario4) - timeToMinutes($horario3)) . " " . MinutsTohour(timeToMinutes($horario6) - timeToMinutes($horario5)) . "<br><br>";
+                    
+                    $totalWorked = MinutsTohour((timeToMinutes((isset($horario2) ? $horario2 : 0 )) - timeToMinutes((isset($horario1) ? $horario1 : 0 ))) + (timeToMinutes((isset($horario4) ? $horario4 : 0 )) - timeToMinutes((isset($horario3) ? $horario3 : 0 ))) + (timeToMinutes((isset($horario6) ? $horario6 : 0 )) - timeToMinutes((isset($horario5) ? $horario5 : 0 ))));
+                    $mode = isset($row['mode']) ? $row['mode'] : null;
+                    
+                    if ($dt<=$hoje){
+                        if( isset($row['mode'])){
+                            if($row['mode'] == 'Feriado' || $row['mode'] == 'Folga bonificada'){
+                                $meta = MinutsTohour(0);
+
+                            }else if ($row['mode'] == 'Feriado Meio'){
+                                $meta = MinutsTohour((timeToMinutes('08:00') - timeToMinutes('14:00')));
+                            }else { 
+                                $meta = MinutsTohour((timeToMinutes($data_h[$diaSemHoje]['h2']) - timeToMinutes($data_h[$diaSemHoje]['h1'])) + (timeToMinutes($data_h[$diaSemHoje]['h4']) - timeToMinutes($data_h[$diaSemHoje]['h3'])) + (timeToMinutes($data_h[$diaSemHoje]['h6']) - timeToMinutes($data_h[$diaSemHoje]['h5'])));
+                            }
+                        }else {
+                            $meta = MinutsTohour((timeToMinutes($data_h[$diaSemHoje]['h2']) - timeToMinutes($data_h[$diaSemHoje]['h1'])) + (timeToMinutes($data_h[$diaSemHoje]['h4']) - timeToMinutes($data_h[$diaSemHoje]['h3'])) + (timeToMinutes($data_h[$diaSemHoje]['h6']) - timeToMinutes($data_h[$diaSemHoje]['h5'])));
+
+                        }
+                    }else {
+                        $meta = MinutsTohour(0);
+                    }
+                    
+                    $totalWorked = abs(timeToMinutes($totalWorked) - timeToMinutes($meta)) >= $data['toleranciaGeral'] ? $totalWorked : $meta;
+
                     $style = ($dt==$hoje) ? "background:rgba(66,214,240,0.28)" : (($dia=='Sunday')?"background:rgba(240,66,66,0.28)":'');
                     echo "<tr style='{$style}'>";
-                    $diaSemHoje = transleteDia($dia);
+                    
                     echo "<td>{$d->format('d/m/Y')} - {$diaSemHoje}</td>";
                     for ($i=1; $i<=6; $i++) {
                         $campo = 'registo'.$i;
@@ -211,60 +252,22 @@ $hoje = date('Y-m-d');
                         $txt = $val && $val!='00:00:00' ? date('H:i',strtotime($val)) : '';
                         echo "<td class='editable' data-data='{$dt}' data-campo='{$campo}'>{$txt}</td>";
                     }
-                    $meta = ($hoje >= $dt) ? calcularMetaDiaria($dia, $data_h) : 0;
+
                     
-                    $totalWorked = 0;
+                     
                     $faltantes = 0;
                     $extra50 = 0;
                     $extra100 = 0;
 
                     // Configurações
-                    $toleranciaPonto = isset($data['toleranciaPonto']) ? $data['toleranciaPonto'] / 60 : 0; // em horas
-                    $toleranciaGeral = isset($data['toleranciaGeral']) ? $data['toleranciaGeral'] / 60 : 0; // em horas
-                    $maximo50 = isset($data['maximo50']) ? $data['maximo50'] / 60 : 0; // em horas
-                    $mode = isset($row['mode']) ? $row['mode'] : null;
+                    $toleranciaPonto = isset($data['toleranciaPonto']) ? $data['toleranciaPonto'] / 60 : 0;
+                    $toleranciaGeral = isset($data['toleranciaGeral']) ? $data['toleranciaGeral'] / 60 : 0;
+
+                    $maximo50 = isset($data['maximo50']) ? $data['maximo50'] / 60 : 0;
                     $diaSemana = transleteDia($d->format('l'));
 
-                    // Ajusta meta se for folga/feriado
-                    if (in_array($mode, ['Folga', 'Feriado'])) {
-                        $meta = 0;
-                    }
 
-                    // Calcular horas trabalhadas com tolerância por ponto
-                    for ($i = 1; $i <= 5; $i += 2) {
-                        $regIn = $row['registo' . $i] ?? null;
-                        $regOut = $row['registo' . ($i + 1)] ?? null;
-
-                        if ($regIn && $regOut && $regIn != '00:00:00' && $regOut != '00:00:00') {
-                            $regInTime = DateTime::createFromFormat('H:i:s', $regIn);
-                            $regOutTime = DateTime::createFromFormat('H:i:s', $regOut);
-
-                            // Obter intervalo nominal correspondente
-                            $intervalIndex = ($i - 1) / 2;
-                            $nominalIn = isset($data_h[$diaSemana]['h' . ($i)]) ? DateTime::createFromFormat('H:i:s', $data_h[$diaSemana]['h' . ($i)]) : null;
-                            $nominalOut = isset($data_h[$diaSemana]['h' . ($i + 1)]) ? DateTime::createFromFormat('H:i:s', $data_h[$diaSemana]['h' . ($i + 1)]) : null;
-
-                            if ($nominalIn && $nominalOut) {
-                                // Aplicar tolerância por ponto
-                                $diffIn = $regInTime->diff($nominalIn)->i + $regInTime->diff($nominalIn)->h * 60;
-                                if ($diffIn > 0 && $diffIn <= $data['toleranciaPonto']) {
-                                    $regInTime = clone $nominalIn;
-                                }
-
-                                $diffOut = $nominalOut->diff($regOutTime)->i + $nominalOut->diff($regOutTime)->h * 60;
-                                if ($diffOut > 0 && $diffOut <= $data['toleranciaPonto']) {
-                                    $regOutTime = clone $nominalOut;
-                                }
-                            }
-
-                            // Calcular horas trabalhadas no intervalo
-                            $interval = $regOutTime->diff($regInTime);
-                            $totalWorked += $interval->h + $interval->i / 60;
-                        }
-                    }
-
-                    // Calcular diferença
-                    $difference = $totalWorked - $meta;
+                    $difference = 0;
 
                     // Determinar faltantes/extras
                     if ($difference < 0) {
@@ -281,10 +284,13 @@ $hoje = date('Y-m-d');
 
 
 
-                    echo "<td>".str_replace('.', ':', number_format($totalWorked, 2))."</td>";
+
+
+
+                    echo "<td>".$totalWorked."</td>";
 
                     $cor = "style='color: rgba(255, 255, 255, 0)'";
-                    echo "<td>".str_replace('.', ':', number_format($meta, 2))."</td>";
+                    echo "<td>". $meta ."</td>";
                     echo "<td ".($faltantes != 0.00 ? '' : $cor).">". str_replace('.', ':', number_format($faltantes, 2))."</td>";
                     echo "<td ".($extra50 != 0.00 ? '' : $cor).">".str_replace('.', ':', number_format($extra50, 2))."</td>";
                     echo "<td ".($extra100 != 0.00 ? '' : $cor).">".str_replace('.', ':', number_format($extra100, 2))."</td>";
@@ -364,6 +370,20 @@ $hoje = date('Y-m-d');
         });
       });
     });
+
+
+    function executarBackground() {
+        fetch('calc_all.php')
+            .then(response => {
+                if (response.ok) {
+                    console.log('Script rodando em background...');
+                } else {
+                    console.error('Erro ao executar script.');
+                }
+            })
+            .catch(error => console.error('Erro:', error));
+    }
+
     </script>
 </body>
 </html>

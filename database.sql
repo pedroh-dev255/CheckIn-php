@@ -50,3 +50,16 @@ CREATE TABLE checkin.registros(
     PRIMARY KEY (id),
     FOREIGN KEY (id_usuario) REFERENCES checkin.users(id)
 );
+
+
+CREATE TABLE checkin.extras(
+    id int AUTO_INCREMENT,
+    id_usuario int NOT NULL,
+    ref date not null,
+    hora050 time not null,
+    hora100 time not null,
+    obs text not null,
+    PRIMARY KEY (id),
+    FOREIGN KEY (id_usuario) REFERENCES checkin.users(id)
+
+);
