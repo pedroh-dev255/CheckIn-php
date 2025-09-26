@@ -95,6 +95,10 @@ function transleteDia($diaSemanaIngles){
     return $map[$diaSemanaIngles] ?? null;
 }
 
+function saldo($dt){
+
+}
+
 $hoje = date('Y-m-d');
 ?>
 <!DOCTYPE html>
@@ -120,7 +124,7 @@ $hoje = date('Y-m-d');
             border-radius: 5px; /* Bordas arredondadas */
             background-color: #f9f9f9; /* Cor de fundo cinza claro */
         }
-        .footer { text-align:center; padding:20px; background:#f2f2f2; }
+        .footer { text-align:center; padding:20px; }
     </style>
 </head>
 <body>
@@ -198,7 +202,12 @@ $hoje = date('Y-m-d');
                 <tbody>
                 <?php
                 $period = new DatePeriod($dataInicio, new DateInterval('P1D'), $dataFim->modify('+1 day'));
-                $saldo = timeToMinutes("03:31");
+                
+                
+                
+                $saldo = timeToMinutes("01:11");
+                $saldoInicial = timeToMinutes("01:11");
+
                 $saldoAnt=0;
                 $saldofal = 0;
                 $saldo50 = 0;
@@ -225,23 +234,26 @@ $hoje = date('Y-m-d');
                     
                     $totalWorked = MinutsTohour((timeToMinutes((isset($horario2) ? $horario2 : 0 )) - timeToMinutes((isset($horario1) ? $horario1 : 0 ))) + (timeToMinutes((isset($horario4) ? $horario4 : 0 )) - timeToMinutes((isset($horario3) ? $horario3 : 0 ))) + (timeToMinutes((isset($horario6) ? $horario6 : 0 )) - timeToMinutes((isset($horario5) ? $horario5 : 0 ))));
                     $mode = isset($row['mode']) ? $row['mode'] : null;
-                    
-                    if ($dt<=$hoje){
-                        if( isset($row['mode'])){
-                            if($row['mode'] == 'Feriado' || $row['mode'] == 'Folga bonificada'){
-                                $meta = MinutsTohour(0);
 
-                            }else if ($row['mode'] == 'Feriado Meio'){
-                                $meta = MinutsTohour((timeToMinutes('08:00') - timeToMinutes('14:00')));
-                            }else { 
+                    if(isset($data['dt_inicio']) && $dt < $data['dt_inicio'] ){
+                        $meta = MinutsTohour(0);
+                    }else{
+                        if ($dt<=$hoje){
+                            if( isset($row['mode'])){
+                                if($row['mode'] == 'Feriado' || $row['mode'] == 'Folga bonificada'){
+                                    $meta = MinutsTohour(0);
+
+                                }else if ($row['mode'] == 'Feriado Meio'){
+                                    $meta = MinutsTohour((timeToMinutes('08:00') - timeToMinutes('14:00')));
+                                }else { 
+                                    $meta = MinutsTohour((timeToMinutes($data_h[$diaSemHoje]['h2']) - timeToMinutes($data_h[$diaSemHoje]['h1'])) + (timeToMinutes($data_h[$diaSemHoje]['h4']) - timeToMinutes($data_h[$diaSemHoje]['h3'])) + (timeToMinutes($data_h[$diaSemHoje]['h6']) - timeToMinutes($data_h[$diaSemHoje]['h5'])));
+                                }
+                            }else {
                                 $meta = MinutsTohour((timeToMinutes($data_h[$diaSemHoje]['h2']) - timeToMinutes($data_h[$diaSemHoje]['h1'])) + (timeToMinutes($data_h[$diaSemHoje]['h4']) - timeToMinutes($data_h[$diaSemHoje]['h3'])) + (timeToMinutes($data_h[$diaSemHoje]['h6']) - timeToMinutes($data_h[$diaSemHoje]['h5'])));
                             }
                         }else {
-                            $meta = MinutsTohour((timeToMinutes($data_h[$diaSemHoje]['h2']) - timeToMinutes($data_h[$diaSemHoje]['h1'])) + (timeToMinutes($data_h[$diaSemHoje]['h4']) - timeToMinutes($data_h[$diaSemHoje]['h3'])) + (timeToMinutes($data_h[$diaSemHoje]['h6']) - timeToMinutes($data_h[$diaSemHoje]['h5'])));
-
+                            $meta = MinutsTohour(0);
                         }
-                    }else {
-                        $meta = MinutsTohour(0);
                     }
                     
                     $totalWorked = abs(timeToMinutes($totalWorked) - timeToMinutes($meta)) >= $data['toleranciaGeral'] ? $totalWorked : $meta;
@@ -323,20 +335,28 @@ $hoje = date('Y-m-d');
                 ?>
                 <tr>
                     <td colspan="7" style="text-align: center; font-weight: bold;">Total:</td>
-                    <td><?= MinutsTohour($saldo) ?></td>
                     <td></td>
-                    <td>-<?= MinutsTohour($saldofal) ?></td>
-                    <td><?= MinutsTohour($saldo50) ?></td>
+                    <td></td>
+                    <td></td>
+                    <td><?= MinutsTohour(($saldo50 + $saldoInicial)-$saldofal) ?></td>
                     <td><?= MinutsTohour($saldo100) ?></td>
                     <td><?= MinutsTohour($saldo) ?></td>
                     <td colspan="2" style="text-align: center; font-weight: bold;">---</td>
                 </tr>
+                <form action="./functions/salvar_extra.php" method="post">
+                    <input type="hidden" name="ref" value="<?= $dt ?>">
+                    <input type="hidden" name="saldo50" value="<?= MinutsTohour($saldo) ?>">
+                    <input type="hidden" name="saldo100" value="<?= MinutsTohour($saldo100) ?>">
+
+                    <button >Salvar saldo como extra</button>
+                </form>
+                
                     <script>
                         document.querySelectorAll('.obs-input').forEach(input => {
                             input.addEventListener('change', () => {
                                 const data = input.dataset.data;
                                 const valor = input.value;
-                                fetch('./atualizar_registro.php', {
+                                fetch('./functions/atualizar_registro.php', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ campo: 'obs', valor, data })
@@ -348,7 +368,7 @@ $hoje = date('Y-m-d');
                             select.addEventListener('change', () => {
                                 const data = select.dataset.data;
                                 const valor = select.value;
-                                fetch('./atualizar_registro.php', {
+                                fetch('./functions/atualizar_registro.php', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ campo: 'mode', valor, data })
@@ -363,7 +383,7 @@ $hoje = date('Y-m-d');
         <br><br><br><br>
         <div class="footer">
             <p>&copy; <?php echo date('Y')?> ClockIn. Todos os direitos reservados.</p>
-            <p><a href="https://portifolio.phsolucoes.space">Pedro Henrique</a></p>
+            <p><a href="https://portifolio.phsolucoes.space" target="_blank" rel="noopener noreferrer">Pedro Henrique</a></p>
         </div>
     </div>
 
@@ -377,7 +397,7 @@ $hoje = date('Y-m-d');
         td.textContent=''; td.appendChild(inp); inp.focus();
         function save(){
           const v = inp.value;
-          fetch('update_registro.php',{method:'POST',
+          fetch('./functions/update_registro.php',{method:'POST',
             headers:{'Content-Type':'application/x-www-form-urlencoded'},
             body:`data=${td.dataset.data}&campo=${td.dataset.campo}&valorTime=${v}`
           })
@@ -396,7 +416,7 @@ $hoje = date('Y-m-d');
 
 
     function executarBackground() {
-        fetch('calc_all.php')
+        fetch('./functions/calc_all.php')
             .then(response => {
                 if (response.ok) {
                     console.log('Script rodando em background...');

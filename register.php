@@ -78,5 +78,9 @@
         <p>Já tem uma conta? <a href="./login.php">Entrar</a></p>
 
     </div>
+    <div class="footer">
+        <p>&copy; <?php echo date('Y')?> ClockIn. Todos os direitos reservados.</p>
+        <p><a href="https://portifolio.phsolucoes.space" target="_blank" rel="noopener noreferrer">Pedro Henrique</a></p>
+    </div>
 </body>
 </html>

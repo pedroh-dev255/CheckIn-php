@@ -60,6 +60,7 @@ CREATE TABLE checkin.extras(
     hora100 time not null,
     obs text not null,
     PRIMARY KEY (id),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (id_usuario) REFERENCES checkin.users(id)
-
 );
+

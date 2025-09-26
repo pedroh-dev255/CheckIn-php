@@ -1,13 +1,17 @@
 body {
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
-    display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
+    display: flex;
+    flex-direction: column;
     margin: 0;
 }
-
+.footer {
+    text-align:center;
+    padding:50px;
+}
 .login {
     background-color: white;
     padding: 20px;
