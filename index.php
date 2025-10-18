@@ -63,7 +63,7 @@ $stmt->bind_param("iss", $_SESSION['user']['id'], $di, $df);
 $stmt->execute();
 $regs = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
-$conn->close();
+
 
 // Mapeia registros por data
 $registrosPorData = [];
@@ -93,10 +93,6 @@ function transleteDia($diaSemanaIngles){
     ];
 
     return $map[$diaSemanaIngles] ?? null;
-}
-
-function saldo($dt){
-
 }
 
 $hoje = date('Y-m-d');
@@ -175,13 +171,11 @@ $hoje = date('Y-m-d');
                 <button class="btn-filter" type="submit">Filtrar</button>
             </form>
             <div class="cabecalho">
-                total de horas: <span class="total-horas">00:00</span>
-                total de horas faltantes: <span class="total-faltantes">00:00</span>
-                total de horas extras 50%: <span class="total-extras">00:00</span>
-                total de horas extras 100%: <span class="total-extras-50">00:00</span>
+                total de horas: <span id="saldo" class="total-horas">00:00</span>
+                total de horas faltantes: <span id="saldo-nega" class="total-faltantes">00:00</span>
+                total de horas extras 50%: <span id="saldo50" class="total-extras">00:00</span>
+                total de horas extras 100%: <span id='saldo100' class="total-extras-50">00:00</span>
             </div>
-
-            <button onclick="executarBackground()">Recalcular as horas extras em Background</button>
             
             <div class="periodo-info">
                 Período: <?php echo $dataInicio->format('d/m/Y').' a '.$dataFim->format('d/m/Y'); ?>
@@ -203,15 +197,42 @@ $hoje = date('Y-m-d');
                 <?php
                 $period = new DatePeriod($dataInicio, new DateInterval('P1D'), $dataFim->modify('+1 day'));
                 
+                // Saldo inicial, pega o último saldo do mês anterior no ultimo dia
                 
-                
-                $saldo = timeToMinutes("01:11");
-                $saldoInicial = timeToMinutes("01:11");
+                $stmt = $conn->prepare("SELECT * FROM extras WHERE id_usuario = ? AND ref = ? ORDER BY id DESC LIMIT 1");
+                //retirar um dia do dataInicio
+                $dataInicio->modify('-1 day');
+                //echo "SELECT * FROM extras WHERE id_usuario = " . $_SESSION['user']['id'] . " AND ref = '" . $dataInicio->format('Y-m-d') . "' ORDER BY id DESC LIMIT 1";
+                $refAnterior = $dataInicio->format('Y-m-d');
+                $stmt->bind_param("is", $_SESSION['user']['id'], $refAnterior);
+                $stmt->execute();
+                $res = $stmt->get_result()->fetch_assoc();
+                $stmt->close();
+                $conn->close();
 
-                $saldoAnt=0;
+                if ($res) {
+                    $saldo50   = timeToMinutes($res['hora050']);
+                    $saldo100  = timeToMinutes($res['hora100']);
+                    $saldo     = $saldo50 + $saldo100;
+                    $saldoInicial = $saldo50;
+                } else {
+                    $saldo50 = 0;
+                    $saldo100 = 0;
+                    $saldo = 0;
+                }
+
+                //altera o saldo via js
+                echo "<script>
+                    document.getElementById('saldo').textContent = '" . MinutsTohour($saldo) . "';
+                    document.getElementById('saldo-nega').textContent = '" . ((timeToMinutes(MinutsTohour($saldo)) < 0) ? MinutsTohour($saldo) : '00:00') . "';
+                    document.getElementById('saldo50').textContent = '" . MinutsTohour($saldo50) . "';
+                    document.getElementById('saldo100').textContent = '" . MinutsTohour($saldo100) . "';
+                </script>";
+
+
                 $saldofal = 0;
-                $saldo50 = 0;
-                $saldo100 = 0;
+                $saldoAnt = 0;
+
                 foreach ($period as $d) {
                     $dt = $d->format('Y-m-d');
                     $row = $registrosPorData[$dt] ?? [];
@@ -343,13 +364,7 @@ $hoje = date('Y-m-d');
                     <td><?= MinutsTohour($saldo) ?></td>
                     <td colspan="2" style="text-align: center; font-weight: bold;">---</td>
                 </tr>
-                <form action="./functions/salvar_extra.php" method="post">
-                    <input type="hidden" name="ref" value="<?= $dt ?>">
-                    <input type="hidden" name="saldo50" value="<?= MinutsTohour($saldo) ?>">
-                    <input type="hidden" name="saldo100" value="<?= MinutsTohour($saldo100) ?>">
-
-                    <button >Salvar saldo como extra</button>
-                </form>
+                
                 
                     <script>
                         document.querySelectorAll('.obs-input').forEach(input => {
@@ -381,6 +396,12 @@ $hoje = date('Y-m-d');
             </table>
         </div>
         <br><br><br><br>
+        <form action="./functions/salvar_extra.php" method="post">
+            <input type="hidden" name="ref" value="<?= $dt ?>">
+            <input type="hidden" name="saldo50" value="<?= MinutsTohour($saldo) ?>">
+            <input type="hidden" name="saldo100" value="<?= MinutsTohour($saldo100) ?>">
+            <button >Salvar saldo como extra</button>
+        </form>
         <div class="footer">
             <p>&copy; <?php echo date('Y')?> ClockIn. Todos os direitos reservados.</p>
             <p><a href="https://portifolio.phsolucoes.space" target="_blank" rel="noopener noreferrer">Pedro Henrique</a></p>
