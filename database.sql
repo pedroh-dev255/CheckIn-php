@@ -1,3 +1,4 @@
+-- Active: 1762862447314@@89.117.33.17@3306@checkin
 CREATE DATABASE checkin;
 use checkin;
 
@@ -64,3 +65,9 @@ CREATE TABLE checkin.extras(
     FOREIGN KEY (id_usuario) REFERENCES checkin.users(id)
 );
 
+CREATE TABLE checkin.password_resets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    token VARCHAR(255) NOT NULL,
+    expires_at DATETIME NOT NULL
+);

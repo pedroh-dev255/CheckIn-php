@@ -53,6 +53,8 @@
 
             <button type="submit">Entrar</button>
         </form>
+        <p><a href="./forgot_password.php">Esqueci minha senha</a></p>
+
         <p>Não tem uma conta? <a href="./register.php">Registrar</a></p>
 
         
