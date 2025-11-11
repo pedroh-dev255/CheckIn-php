@@ -1,6 +1,7 @@
 <?php
 session_start();
 include_once './config/db.php';
+include_once './config/mailer.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email']);
@@ -14,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($result->num_rows === 0) {
         echo "<script>alert('E-mail não encontrado.');</script>";
     } else {
-        // Gera token e data de expiração (1 hora)
+        // Gera token e expiração
         $token = bin2hex(random_bytes(32));
         $expires = date("Y-m-d H:i:s", strtotime("+1 hour"));
 
@@ -26,11 +27,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param("sss", $email, $token, $expires);
         $stmt->execute();
 
-        // Link (ajuste o domínio)
+        // Gera link (ajuste o domínio do seu site)
         $resetLink = "https://seusite.com/reset_password.php?token=$token";
 
-        // Aqui você pode enviar o e-mail real com mail() ou PHPMailer
-        echo "<script>alert('Um link de redefinição foi enviado para o e-mail informado. (Simulação)\\n$resetLink');</script>";
+        // Corpo do e-mail (HTML)
+        $body = "
+        <h2>Recuperação de Senha - ClockIn</h2>
+        <p>Olá,</p>
+        <p>Recebemos uma solicitação para redefinir a sua senha.</p>
+        <p>Para redefinir, clique no botão abaixo:</p>
+        <p><a href='$resetLink' style='background:#4CAF50;color:white;padding:10px 20px;border-radius:5px;text-decoration:none;'>Redefinir Senha</a></p>
+        <br>
+        <p>Se você não fez essa solicitação, ignore este e-mail.</p>
+        <p><small>Este link expira em 1 hora.</small></p>
+        ";
+
+        if (sendMail($email, 'Recuperação de senha - ClockIn', $body)) {
+            echo "<script>alert('Um e-mail de redefinição foi enviado. Verifique sua caixa de entrada.'); window.location.href='./login.php';</script>";
+        } else {
+            echo "<script>alert('Erro ao enviar o e-mail. Tente novamente mais tarde.');</script>";
+        }
     }
 }
 ?>
