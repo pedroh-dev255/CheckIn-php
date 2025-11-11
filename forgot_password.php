@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
 
         // Gera link (ajuste o domínio do seu site)
-        $resetLink = "https://seusite.com/reset_password.php?token=$token";
+        $resetLink = "https://clockin.phsolucoes.space/reset_password.php?token=$token";
 
         // Corpo do e-mail (HTML)
         $body = "
